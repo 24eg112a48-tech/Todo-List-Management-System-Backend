@@ -1,0 +1,24 @@
+# Render blueprint for the Todo backend (container service).
+# IMPORTANT — persistence: this blueprint intentionally has NO disk attached.
+# Render's free tier uses an ephemeral filesystem, so the file-based H2
+# database would be WIPED on every restart/redeploy. Options:
+#   1. Attach a paid persistent disk (requires a paid instance type) and set
+#      TODO_DB_PATH to a path on it, e.g. /var/data/tododb
+#      (add under this service: disk: {name: data, mountPath: /var/data, sizeGB: 1})
+#   2. Switch to a managed persistent database (e.g. Render Postgres) — this
+#      changes the stack, so it needs explicit approval first.
+# Until one of those is chosen, do NOT claim production data persists.
+services:
+  - type: web
+    name: todo-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    envVars:
+      # PORT is injected automatically by Render; Spring maps it to server.port.
+      - key: TODO_CORS_PATTERNS
+        value: https://todo-frontend.vercel.app
+        # TODO: replace with the real deployed frontend domain after it exists.
+      - key: TODO_DB_PATH
+        value: ./data/tododb
+        # TODO: point at persistent storage (see note above) once available.
